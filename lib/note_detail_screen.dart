@@ -26,6 +26,7 @@ class NoteDetailScreen extends StatefulWidget {
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
   late Note _note;
   late quill.QuillController _quillController;
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   void initState() {
@@ -56,6 +57,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   category: _note.category,
                   isArchived: _note.isArchived,
                   isPinned: !_note.isPinned,
+                  tags: _note.tags,
+                  isLocked: _note.isLocked,
                 );
               });
               widget.onEdit(_note);
@@ -118,40 +121,167 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 );
               },
             ),
+          IconButton(
+            icon: Icon(_note.isLocked ? Icons.lock : Icons.lock_open),
+            onPressed: () => _toggleLock(context),
+          ),
         ],
       ),
-      body: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Category: ${_note.category}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Tags: ${_note.tags.join(', ')}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: quill.QuillEditor(
-                  controller: _quillController,
-                  scrollController: ScrollController(),
-                  focusNode: FocusNode(),
-                ),
-              ),
-            ],
+      body: _note.isLocked ? _buildLockedView() : _buildNoteContent(),
+    );
+  }
+
+  Widget _buildLockedView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.lock, size: 64, color: Theme.of(context).colorScheme.secondary),
+          const SizedBox(height: 16),
+          Text('This note is locked', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _unlockNote(context),
+            child: const Text('Unlock'),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoteContent() {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Category: ${_note.category}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Tags: ${_note.tags.join(', ')}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: quill.QuillEditor(
+                controller: _quillController,
+                scrollController: ScrollController(),
+                focusNode: FocusNode(),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  void _toggleLock(BuildContext context) {
+    if (_note.isLocked) {
+      _unlockNote(context);
+    } else {
+      _lockNote(context);
+    }
+  }
+
+  void _lockNote(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Set Password'),
+          content: TextField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(hintText: 'Enter password'),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Lock'),
+              onPressed: () async {
+                if (_passwordController.text.isNotEmpty) {
+                  await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, true);
+                  setState(() {
+                    _note = Note(
+                      id: _note.id,
+                      title: _note.title,
+                      content: _note.content,
+                      category: _note.category,
+                      isArchived: _note.isArchived,
+                      isPinned: _note.isPinned,
+                      tags: _note.tags,
+                      isLocked: true,
+                    );
+                  });
+                  widget.onEdit(_note);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _unlockNote(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Enter Password'),
+          content: TextField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(hintText: 'Enter password'),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Unlock'),
+              onPressed: () async {
+                // In a real app, you'd verify the password here
+                await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, false);
+                setState(() {
+                  _note = Note(
+                    id: _note.id,
+                    title: _note.title,
+                    content: _note.content,
+                    category: _note.category,
+                    isArchived: _note.isArchived,
+                    isPinned: _note.isPinned,
+                    tags: _note.tags,
+                    isLocked: false,
+                  );
+                });
+                widget.onEdit(_note);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
   }
 }

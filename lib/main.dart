@@ -70,7 +70,8 @@ class Note {
   String category;
   bool isArchived;
   bool isPinned;
-  List<String> tags; // Add this line
+  List<String> tags;
+  bool isLocked; // Add this line
 
   Note({
     this.id,
@@ -79,7 +80,8 @@ class Note {
     required this.category,
     this.isArchived = false,
     this.isPinned = false,
-    this.tags = const [], // Add this line
+    this.tags = const [],
+    this.isLocked = false, // Add this line
   });
 
   Map<String, dynamic> toMap() {
@@ -90,7 +92,8 @@ class Note {
       'category': category,
       'isArchived': isArchived ? 1 : 0,
       'isPinned': isPinned ? 1 : 0,
-      'tags': jsonEncode(tags), // Add this line
+      'tags': jsonEncode(tags),
+      'isLocked': isLocked ? 1 : 0, // Add this line
     };
   }
 
@@ -102,7 +105,8 @@ class Note {
       category: map['category'] as String,
       isArchived: map['isArchived'] == 1,
       isPinned: map['isPinned'] == 1,
-      tags: List<String>.from(jsonDecode(map['tags'])), // Add this line
+      tags: List<String>.from(jsonDecode(map['tags'])),
+      isLocked: map['isLocked'] == 1, // Add this line
     );
   }
 }
@@ -288,6 +292,7 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
       title: Text(note.title),
       subtitle: Text('Category: ${note.category}'),
       leading: note.isPinned ? const Icon(Icons.push_pin) : null,
+      trailing: note.isLocked ? const Icon(Icons.lock) : null, // Add this line
       onTap: () {
         Navigator.push(
           context,

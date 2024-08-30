@@ -21,7 +21,7 @@ class DatabaseHelper {
     String path = join(documentsDirectory.path, filePath);
     return await openDatabase(
       path, 
-      version: 4, // Increased to 4
+      version: 5, // Increase the version to 5
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -36,7 +36,8 @@ class DatabaseHelper {
         category TEXT,
         isArchived INTEGER DEFAULT 0,
         isPinned INTEGER DEFAULT 0,
-        tags TEXT DEFAULT '[]' // Corrected syntax
+        tags TEXT DEFAULT '[]',
+        isLocked INTEGER DEFAULT 0
       )
     ''');
   }
@@ -48,8 +49,11 @@ class DatabaseHelper {
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE notes ADD COLUMN isPinned INTEGER DEFAULT 0');
     }
-    if (oldVersion < 4) { // Corrected block
+    if (oldVersion < 4) {
       await db.execute('ALTER TABLE notes ADD COLUMN tags TEXT DEFAULT \'[]\'');
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE notes ADD COLUMN isLocked INTEGER DEFAULT 0');
     }
   }
 
@@ -89,10 +93,20 @@ class DatabaseHelper {
     );
   }
 
+  Future<int> updateNoteLockStatus(int id, bool isLocked) async {
+    Database db = await instance.database;
+    return await db.update(
+      'notes',
+      {'isLocked': isLocked ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<int> deleteNote(int id) async {
     Database db = await instance.database;
     return await db.delete('notes', where: 'id = ?', whereArgs: [id]);
   }
 }
 
-  insertNote(Note note) {}
+insertNote(Note note) {}
