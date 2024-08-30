@@ -4,6 +4,8 @@ import 'main.dart';
 import 'add_edit_note_screen.dart';
 import 'database_helper.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crypto/crypto.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final Note note;
@@ -206,12 +208,16 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           actions: [
             TextButton(
               child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                _passwordController.clear();
+                Navigator.of(context).pop();
+              },
             ),
             TextButton(
               child: const Text('Lock'),
               onPressed: () async {
                 if (_passwordController.text.isNotEmpty) {
+                  await _savePassword(_passwordController.text);
                   await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, true);
                   setState(() {
                     _note = Note(
@@ -226,6 +232,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                     );
                   });
                   widget.onEdit(_note);
+                  _passwordController.clear();
                   Navigator.of(context).pop();
                 }
               },
@@ -250,33 +257,61 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           actions: [
             TextButton(
               child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                _passwordController.clear();
+                Navigator.of(context).pop();
+              },
             ),
             TextButton(
               child: const Text('Unlock'),
               onPressed: () async {
-                // In a real app, you'd verify the password here
-                await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, false);
-                setState(() {
-                  _note = Note(
-                    id: _note.id,
-                    title: _note.title,
-                    content: _note.content,
-                    category: _note.category,
-                    isArchived: _note.isArchived,
-                    isPinned: _note.isPinned,
-                    tags: _note.tags,
-                    isLocked: false,
+                if (await _verifyPassword(_passwordController.text)) {
+                  await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, false);
+                  setState(() {
+                    _note = Note(
+                      id: _note.id,
+                      title: _note.title,
+                      content: _note.content,
+                      category: _note.category,
+                      isArchived: _note.isArchived,
+                      isPinned: _note.isPinned,
+                      tags: _note.tags,
+                      isLocked: false,
+                    );
+                  });
+                  widget.onEdit(_note);
+                  _passwordController.clear();
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Incorrect password')),
                   );
-                });
-                widget.onEdit(_note);
-                Navigator.of(context).pop();
+                }
               },
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _savePassword(String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    final hashedPassword = _hashPassword(password);
+    await prefs.setString('note_${_note.id}_password', hashedPassword);
+  }
+
+  Future<bool> _verifyPassword(String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedHash = prefs.getString('note_${_note.id}_password');
+    final inputHash = _hashPassword(password);
+    return storedHash == inputHash;
+  }
+
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 
   @override

@@ -125,6 +125,7 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
                     isArchived: widget.noteToEdit?.isArchived ?? false,
                     isPinned: widget.noteToEdit?.isPinned ?? false,
                     tags: _tagsController.text.split(',').map((tag) => tag.trim()).toList(),
+                    isLocked: widget.noteToEdit?.isLocked ?? false,
                   );
                   if (widget.noteToEdit == null) {
                     int id = await DatabaseHelper.instance.insertNote(note);
@@ -133,9 +134,7 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
                     await DatabaseHelper.instance.updateNote(note);
                   }
                   if (!mounted) return;
-                  if (context.mounted) {
-                    Navigator.pop(context, note);
-                  }
+                  Navigator.pop(context, note);
                 },
                 child: Text(widget.noteToEdit == null ? 'Add' : 'Save'),
               ),

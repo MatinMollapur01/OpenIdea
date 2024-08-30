@@ -50,10 +50,20 @@ class DatabaseHelper {
       await db.execute('ALTER TABLE notes ADD COLUMN isPinned INTEGER DEFAULT 0');
     }
     if (oldVersion < 4) {
-      await db.execute('ALTER TABLE notes ADD COLUMN tags TEXT DEFAULT \'[]\'');
+      // Check if the 'tags' column exists before adding it
+      var columns = await db.rawQuery('PRAGMA table_info(notes)');
+      bool tagsColumnExists = columns.any((column) => column['name'] == 'tags');
+      if (!tagsColumnExists) {
+        await db.execute('ALTER TABLE notes ADD COLUMN tags TEXT DEFAULT \'[]\'');
+      }
     }
     if (oldVersion < 5) {
-      await db.execute('ALTER TABLE notes ADD COLUMN isLocked INTEGER DEFAULT 0');
+      // Check if the 'isLocked' column exists before adding it
+      var columns = await db.rawQuery('PRAGMA table_info(notes)');
+      bool isLockedColumnExists = columns.any((column) => column['name'] == 'isLocked');
+      if (!isLockedColumnExists) {
+        await db.execute('ALTER TABLE notes ADD COLUMN isLocked INTEGER DEFAULT 0');
+      }
     }
   }
 

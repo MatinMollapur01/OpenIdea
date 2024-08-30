@@ -22,7 +22,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _isDarkMode = false;
+  bool _isDarkMode = true;  // Change this to true
 
   @override
   void initState() {
@@ -33,7 +33,7 @@ class _MyAppState extends State<MyApp> {
   void _loadDarkModePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+      _isDarkMode = prefs.getBool('isDarkMode') ?? true;  // Change this to true
     });
   }
 
