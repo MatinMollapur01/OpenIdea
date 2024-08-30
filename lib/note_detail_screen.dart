@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'main.dart';
 import 'add_edit_note_screen.dart';
 import 'database_helper.dart';
+import 'dart:convert';
 
 class NoteDetailScreen extends StatefulWidget {
   final Note note;
@@ -10,24 +12,30 @@ class NoteDetailScreen extends StatefulWidget {
   final Function(bool) onArchiveStatusChanged;
 
   const NoteDetailScreen({
-    Key? key,
+    super.key,
     required this.note,
     required this.onEdit,
     required this.onDelete,
     required this.onArchiveStatusChanged,
-  }) : super(key: key);
+  });
 
   @override
-  _NoteDetailScreenState createState() => _NoteDetailScreenState();
+  State<NoteDetailScreen> createState() => _NoteDetailScreenState();
 }
 
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
   late Note _note;
+  late quill.QuillController _quillController;
 
   @override
   void initState() {
     super.initState();
     _note = widget.note;
+    _quillController = quill.QuillController(
+      document: quill.Document.fromJson(jsonDecode(_note.content)),
+      selection: const TextSelection.collapsed(offset: 0),
+      readOnly: true,
+    );
   }
 
   @override
@@ -53,61 +61,67 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               widget.onEdit(_note);
             },
           ),
-          if (!_note.isArchived) IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final editedNote = await Navigator.push<Note>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddEditNoteScreen(noteToEdit: _note),
-                ),
-              );
-              if (editedNote != null) {
-                widget.onEdit(editedNote); // Corrected from onEdit to widget.onEdit
-              }
-            },
-          ),
+          if (!_note.isArchived)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final editedNote = await Navigator.push<Note>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddEditNoteScreen(noteToEdit: _note),
+                  ),
+                );
+                if (editedNote != null) {
+                  widget.onEdit(editedNote);
+                }
+              },
+            ),
           IconButton(
             icon: Icon(_note.isArchived ? Icons.unarchive : Icons.archive),
             onPressed: () async {
               await DatabaseHelper.instance.updateNoteArchiveStatus(_note.id!, !_note.isArchived);
-              widget.onArchiveStatusChanged(!_note.isArchived); // Corrected reference
-              Navigator.pop(context);
+              widget.onArchiveStatusChanged(!_note.isArchived);
+              if (mounted) {
+                Navigator.pop(context);
+              }
             },
           ),
-          if (!_note.isArchived) IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text("Delete Note"),
-                    content: const Text("Are you sure you want to delete this note?"),
-                    actions: [
-                      TextButton(
-                        child: const Text("Cancel"),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      TextButton(
-                        child: const Text("Delete"),
-                        onPressed: () async {
-                          await DatabaseHelper.instance.deleteNote(_note.id!);
-                          widget.onDelete();
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
+          if (!_note.isArchived)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Delete Note"),
+                      content: const Text("Are you sure you want to delete this note?"),
+                      actions: [
+                        TextButton(
+                          child: const Text("Cancel"),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        TextButton(
+                          child: const Text("Delete"),
+                          onPressed: () async {
+                            await DatabaseHelper.instance.deleteNote(_note.id!);
+                            widget.onDelete();
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                              Navigator.of(context).pop();
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
         ],
       ),
       body: Container(
-        color: Theme.of(context).colorScheme.surface, // Updated from background to surface
+        color: Theme.of(context).colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -116,18 +130,22 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               Text(
                 'Category: ${_note.category}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Tags: ${_note.tags.join(', ')}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Text(
-                    _note.content, // Changed from note.content to _note.content
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
+                child: quill.QuillEditor(
+                  controller: _quillController,
+                  scrollController: ScrollController(),
+                  focusNode: FocusNode(),
                 ),
               ),
             ],

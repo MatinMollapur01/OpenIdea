@@ -1,7 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:idea/database_helper.dart';
-import 'add_edit_note_screen.dart';
-import 'note_detail_screen.dart';
+import 'add_edit_note_screen.dart' as add_edit;
+import 'note_detail_screen.dart' as detail;
 import 'settings_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'archived_notes_screen.dart';
@@ -69,6 +70,7 @@ class Note {
   String category;
   bool isArchived;
   bool isPinned;
+  List<String> tags; // Add this line
 
   Note({
     this.id,
@@ -77,6 +79,7 @@ class Note {
     required this.category,
     this.isArchived = false,
     this.isPinned = false,
+    this.tags = const [], // Add this line
   });
 
   Map<String, dynamic> toMap() {
@@ -87,6 +90,7 @@ class Note {
       'category': category,
       'isArchived': isArchived ? 1 : 0,
       'isPinned': isPinned ? 1 : 0,
+      'tags': jsonEncode(tags), // Add this line
     };
   }
 
@@ -98,6 +102,7 @@ class Note {
       category: map['category'] as String,
       isArchived: map['isArchived'] == 1,
       isPinned: map['isPinned'] == 1,
+      tags: List<String>.from(jsonDecode(map['tags'])), // Add this line
     );
   }
 }
@@ -134,7 +139,7 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
     final result = await Navigator.push<Note>(
       context,
       MaterialPageRoute(
-        builder: (context) => AddEditNoteScreen(noteToEdit: noteToEdit),
+        builder: (context) => add_edit.AddEditNoteScreen(noteToEdit: noteToEdit),
       ),
     );
 
@@ -161,7 +166,8 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
   List<Note> get _filteredNotes {
     List<Note> filtered = _notes.where((note) {
       return note.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          note.content.toLowerCase().contains(_searchQuery.toLowerCase());
+          note.content.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          note.tags.any((tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()));
     }).toList();
 
     // Sort the filtered notes: pinned notes first, then by ID (most recent first)
@@ -286,7 +292,7 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => NoteDetailScreen(
+            builder: (context) => detail.NoteDetailScreen(
               note: note,
               onEdit: (editedNote) {
                 setState(() {
@@ -317,4 +323,3 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
     );
   }
 }
-

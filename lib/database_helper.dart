@@ -21,7 +21,7 @@ class DatabaseHelper {
     String path = join(documentsDirectory.path, filePath);
     return await openDatabase(
       path, 
-      version: 3, // Increased to 3
+      version: 4, // Increased to 4
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -35,7 +35,8 @@ class DatabaseHelper {
         content TEXT,
         category TEXT,
         isArchived INTEGER DEFAULT 0,
-        isPinned INTEGER DEFAULT 0
+        isPinned INTEGER DEFAULT 0,
+        tags TEXT DEFAULT '[]' // Corrected syntax
       )
     ''');
   }
@@ -46,6 +47,9 @@ class DatabaseHelper {
     }
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE notes ADD COLUMN isPinned INTEGER DEFAULT 0');
+    }
+    if (oldVersion < 4) { // Corrected block
+      await db.execute('ALTER TABLE notes ADD COLUMN tags TEXT DEFAULT \'[]\'');
     }
   }
 
@@ -90,3 +94,5 @@ class DatabaseHelper {
     return await db.delete('notes', where: 'id = ?', whereArgs: [id]);
   }
 }
+
+  insertNote(Note note) {}
