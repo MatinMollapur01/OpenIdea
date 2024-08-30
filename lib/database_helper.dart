@@ -21,7 +21,7 @@ class DatabaseHelper {
     String path = join(documentsDirectory.path, filePath);
     return await openDatabase(
       path, 
-      version: 5, // Increase the version to 5
+      version: 6, // Increase the version to 6
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -38,6 +38,17 @@ class DatabaseHelper {
         isPinned INTEGER DEFAULT 0,
         tags TEXT DEFAULT '[]',
         isLocked INTEGER DEFAULT 0
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE note_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        note_id INTEGER,
+        title TEXT,
+        content TEXT,
+        timestamp INTEGER,
+        FOREIGN KEY (note_id) REFERENCES notes (id) ON DELETE CASCADE
       )
     ''');
   }
@@ -65,6 +76,19 @@ class DatabaseHelper {
         await db.execute('ALTER TABLE notes ADD COLUMN isLocked INTEGER DEFAULT 0');
       }
     }
+    if (oldVersion < 6) {
+      // Add the note_history table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS note_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          note_id INTEGER,
+          title TEXT,
+          content TEXT,
+          timestamp INTEGER,
+          FOREIGN KEY (note_id) REFERENCES notes (id) ON DELETE CASCADE
+        )
+      ''');
+    }
   }
 
   Future<int> insertNote(Note note) async {
@@ -80,6 +104,7 @@ class DatabaseHelper {
 
   Future<int> updateNote(Note note) async {
     Database db = await instance.database;
+    await insertNoteHistory(note.id!, note.title, note.content);
     return await db.update('notes', note.toMap(), where: 'id = ?', whereArgs: [note.id]);
   }
 
@@ -116,6 +141,26 @@ class DatabaseHelper {
   Future<int> deleteNote(int id) async {
     Database db = await instance.database;
     return await db.delete('notes', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> insertNoteHistory(int noteId, String title, String content) async {
+    Database db = await instance.database;
+    return await db.insert('note_history', {
+      'note_id': noteId,
+      'title': title,
+      'content': content,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getNoteHistory(int noteId) async {
+    Database db = await instance.database;
+    return await db.query(
+      'note_history',
+      where: 'note_id = ?',
+      whereArgs: [noteId],
+      orderBy: 'timestamp DESC',
+    );
   }
 }
 

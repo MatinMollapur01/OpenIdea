@@ -6,6 +6,7 @@ import 'database_helper.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
+import 'note_history_screen.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final Note note;
@@ -135,6 +136,29 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           IconButton(
             icon: Icon(_note.isLocked ? Icons.lock : Icons.lock_open),
             onPressed: () => _toggleLock(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () async {
+              final restoredNote = await Navigator.push<Note>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NoteHistoryScreen(currentNote: _note),
+                ),
+              );
+              if (restoredNote != null) {
+                setState(() {
+                  _note = restoredNote;
+                  _quillController = quill.QuillController(
+                    document: quill.Document.fromJson(jsonDecode(_note.content)),
+                    selection: const TextSelection.collapsed(offset: 0),
+                    readOnly: true,
+                  );
+                  _updateStats();
+                });
+                widget.onEdit(_note);
+              }
+            },
           ),
         ],
       ),
