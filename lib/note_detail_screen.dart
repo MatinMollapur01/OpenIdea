@@ -29,6 +29,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   late Note _note;
   late quill.QuillController _quillController;
   final TextEditingController _passwordController = TextEditingController();
+  late String _wordCount;
+  late String _characterCount;
 
   @override
   void initState() {
@@ -39,6 +41,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       selection: const TextSelection.collapsed(offset: 0),
       readOnly: true,
     );
+    _updateStats();
+  }
+
+  void _updateStats() {
+    final plainText = _quillController.document.toPlainText();
+    _characterCount = plainText.length.toString();
+    _wordCount = plainText.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length.toString();
   }
 
   @override
@@ -129,7 +138,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           ),
         ],
       ),
-      body: _note.isLocked ? _buildLockedView() : _buildNoteContent(),
+      body: Column(
+        children: [
+          Expanded(
+            child: _note.isLocked ? _buildLockedView() : _buildNoteContent(),
+          ),
+          _buildStatsFooter(),
+        ],
+      ),
     );
   }
 
@@ -181,6 +197,20 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsFooter() {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      color: Theme.of(context).colorScheme.surface,
+      child: Text(
+        'Words: $_wordCount | Characters: $_characterCount',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          fontSize: 12,
         ),
       ),
     );
