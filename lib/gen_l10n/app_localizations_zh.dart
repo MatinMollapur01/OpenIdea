@@ -2,7 +2,7 @@ import 'app_localizations.dart';
 
 /// The translations for Chinese - Simplified (`zh`).
 class AppLocalizationsZh extends AppLocalizations {
-  AppLocalizationsZh([String locale = 'zh']) : super(locale);
+  AppLocalizationsZh([super.locale = 'zh']);
 
   @override
   String get appTitle => 'Idea - 笔记应用程序';
@@ -124,4 +124,13 @@ class AppLocalizationsZh extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => '待办事项';
+
+  @override
+  get noteArchived => '笔记已归档';
+
+  @override
+  get noteUnarchived => '笔记未归档';
+
+  @override
+  get lock => '锁定';
 }

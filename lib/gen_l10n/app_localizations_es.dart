@@ -2,7 +2,7 @@ import 'app_localizations.dart';
 
 /// The translations for Spanish (`es`).
 class AppLocalizationsEs extends AppLocalizations {
-  AppLocalizationsEs([String locale = 'es']) : super(locale);
+  AppLocalizationsEs([super.locale = 'es']);
 
   @override
   String get appTitle => 'Idea - Aplicación para tomar notas';
@@ -124,4 +124,13 @@ class AppLocalizationsEs extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => 'Por hacer';
+
+  @override
+  get noteArchived => 'Nota archivada';
+
+  @override
+  get noteUnarchived => 'Nota no archivada';
+
+  @override
+  get lock => 'Bloquear';
 }

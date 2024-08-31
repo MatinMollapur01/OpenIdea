@@ -2,10 +2,10 @@ import 'app_localizations.dart';
 
 /// The translations for Azerbaijani (`az`).
 class AppLocalizationsAz extends AppLocalizations {
-  AppLocalizationsAz([String locale = 'az']) : super(locale);
+  AppLocalizationsAz([super.locale = 'az']);
 
   @override
-  String get appTitle => 'Idea - Note Taking App';
+  String get appTitle => 'Idea - Qeyd Götürmə Tətbiqi';
 
   @override
   String get addNote => 'Qeyd əlavə et';
@@ -124,4 +124,13 @@ class AppLocalizationsAz extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => 'Ediləcək işlər'; 
+
+  @override
+  get noteArchived => 'Qeyd arxivləndi';
+
+  @override
+  get noteUnarchived => 'Qeyd arxivlənmədi';
+
+  @override
+  get lock => 'Kilidini aç';
 }

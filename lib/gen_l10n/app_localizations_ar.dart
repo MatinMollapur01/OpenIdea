@@ -5,7 +5,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'Idea - Note Taking App';
+  String get appTitle => 'Idea - تطبيق تدوين الملاحظات';
 
   @override
   String get addNote => 'إضافة ملاحظة';
@@ -124,4 +124,13 @@ class AppLocalizationsAr extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => 'للعمل'; 
+
+  @override
+  get noteArchived => 'ملاحظة بعنوان';
+
+  @override
+  get noteUnarchived => 'ملاحظة بعنوان';
+
+  @override
+  get lock => 'قفل';
 }

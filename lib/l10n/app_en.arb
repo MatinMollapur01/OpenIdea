@@ -75,5 +75,7 @@
   "categoryWork": "Work",
   "categoryPersonal": "Personal",
   "categoryIdeas": "Ideas",
-  "categoryToDo": "To-Do"
+  "categoryToDo": "To-Do",
+  "noteArchived": "Note archived",
+  "noteUnarchived": "Note unarchived"
 }

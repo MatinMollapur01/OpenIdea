@@ -5,7 +5,7 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([super.locale = 'fa']);
 
   @override
-  String get appTitle => 'Idea - Note Taking App';
+  String get appTitle => 'Idea - برنامه یادداشت‌برداری';
 
   @override
   String get addNote => 'افزودن یادداشت';
@@ -124,4 +124,13 @@ class AppLocalizationsFa extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => 'انجام دادنی';
+
+  @override
+  get noteArchived => 'یادداشت بایگانی شد';
+
+  @override
+  get noteUnarchived => 'یادداشت بایگانی نشد';
+
+  @override
+  get lock => 'قفل کردن';
 }

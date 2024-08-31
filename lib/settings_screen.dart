@@ -8,12 +8,12 @@ class SettingsScreen extends StatefulWidget {
   final String currentLanguage;
 
   const SettingsScreen({
-    Key? key,
+    super.key,
     required this.isDarkMode,
     required this.toggleDarkMode,
     required this.changeLanguage,
     required this.currentLanguage,
-  }) : super(key: key);
+  });
 
   @override
   SettingsScreenState createState() => SettingsScreenState();

@@ -126,4 +126,14 @@ class AppLocalizationsEn extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => 'To Do'; 
+
+   @override
+  get noteArchived => 'Note archived';
+
+  /// Label for note unarchived
+  @override
+  get noteUnarchived => 'Note unarchived';
+
+  @override
+  get lock => 'Lock';
 }

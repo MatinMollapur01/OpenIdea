@@ -7,8 +7,13 @@ import 'package:idea/gen_l10n/app_localizations.dart';
 
 class NoteHistoryScreen extends StatefulWidget {
   final Note currentNote;
+  final Function(Note) onNoteUpdated;
 
-  const NoteHistoryScreen({super.key, required this.currentNote});
+  const NoteHistoryScreen({
+    Key? key,
+    required this.currentNote,
+    required this.onNoteUpdated,
+  }) : super(key: key);
 
   @override
   State<NoteHistoryScreen> createState() => _NoteHistoryScreenState();
@@ -51,6 +56,10 @@ class _NoteHistoryScreenState extends State<NoteHistoryScreen> {
                   builder: (context) => NoteHistoryDetailScreen(
                     historyItem: historyItem,
                     currentNote: widget.currentNote,
+                    onNoteRestored: (restoredNote) {
+                      widget.onNoteUpdated(restoredNote);
+                      Navigator.pop(context); // Close the history screen
+                    },
                   ),
                 ),
               );
@@ -65,8 +74,14 @@ class _NoteHistoryScreenState extends State<NoteHistoryScreen> {
 class NoteHistoryDetailScreen extends StatelessWidget {
   final Map<String, dynamic> historyItem;
   final Note currentNote;
+  final Function(Note) onNoteRestored;
 
-  const NoteHistoryDetailScreen({Key? key, required this.historyItem, required this.currentNote}) : super(key: key);
+  const NoteHistoryDetailScreen({
+    Key? key,
+    required this.historyItem,
+    required this.currentNote,
+    required this.onNoteRestored,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -93,10 +108,8 @@ class NoteHistoryDetailScreen extends StatelessWidget {
                 isLocked: currentNote.isLocked,
               );
               await DatabaseHelper.instance.updateNote(updatedNote);
-              
-              // Pop twice to return to the main screen
-              Navigator.of(context).pop();
-              Navigator.of(context).pop(updatedNote);
+              onNoteRestored(updatedNote);
+              Navigator.of(context).pop(); // Close the detail screen
             },
             child: Text(localizations.restore),
           ),

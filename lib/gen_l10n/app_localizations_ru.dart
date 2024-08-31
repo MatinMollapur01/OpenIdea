@@ -2,10 +2,10 @@ import 'app_localizations.dart';
 
 /// The translations for Russian (`ru`).
 class AppLocalizationsRu extends AppLocalizations {
-  AppLocalizationsRu([String locale = 'ru']) : super(locale);
+  AppLocalizationsRu([super.locale = 'ru']);
 
   @override
-  String get appTitle => 'Идея - Приложение для заметок';
+  String get appTitle => 'Idea - Приложение для заметок';
 
   @override
   String get addNote => 'Добавить заметку';
@@ -124,4 +124,13 @@ class AppLocalizationsRu extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => 'Список дел'; 
+
+  @override
+  get noteArchived => 'Заметка архивирована';
+
+  @override
+  get noteUnarchived => 'Заметка не архивирована';
+
+  @override
+  get lock => 'Заблокировать';
 }

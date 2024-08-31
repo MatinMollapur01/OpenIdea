@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:idea/database_helper.dart';
 import 'add_edit_note_screen.dart' as add_edit;
@@ -272,8 +273,8 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
       subtitle: Text('${localizations.category}: $localizedCategory'),
       leading: note.isPinned ? const Icon(Icons.push_pin) : null,
       trailing: note.isLocked ? const Icon(Icons.lock) : null,
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final updatedNote = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => detail.NoteDetailScreen(
@@ -285,7 +286,6 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
                     _notes[noteIndex] = editedNote;
                   }
                 });
-                _loadNotes(); // Reload notes to reflect changes
               },
               onDelete: () {
                 setState(() {
@@ -304,8 +304,68 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
             ),
           ),
         );
+        if (updatedNote != null) {
+          setState(() {
+            final noteIndex = _notes.indexWhere((n) => n.id == updatedNote.id);
+            if (noteIndex != -1) {
+              _notes[noteIndex] = updatedNote;
+            }
+          });
+        }
       },
     );
+  }
+
+  Future<bool> _showUnlockDialog(Note note) async {
+    final TextEditingController passwordController = TextEditingController();
+    final localizations = AppLocalizations.of(context)!;
+    bool isUnlocked = false;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(localizations.enterPassword),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: InputDecoration(hintText: localizations.enterPassword),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(localizations.cancel),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(localizations.unlock),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final storedHash = prefs.getString('note_${note.id}_password');
+                final inputHash = _hashPassword(passwordController.text);
+                if (storedHash == inputHash) {
+                  isUnlocked = true;
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(localizations.incorrectPassword)),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    return isUnlocked;
+  }
+
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 
   String _getLocalizedCategory(String categoryKey, AppLocalizations localizations) {

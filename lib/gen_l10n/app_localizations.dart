@@ -244,6 +244,8 @@ abstract class AppLocalizations {
   /// **'Unlock'**
   String get unlock;
 
+  String get lock;
+
   get words;
 
   get characters;
@@ -279,6 +281,12 @@ abstract class AppLocalizations {
 
   ///** To Do
   String get categoryToDo;
+
+  /// Label for note archived
+  get noteArchived;
+
+  /// Label for note unarchived
+  get noteUnarchived;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

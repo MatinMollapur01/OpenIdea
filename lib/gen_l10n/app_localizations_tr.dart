@@ -2,10 +2,10 @@ import 'app_localizations.dart';
 
 /// The translations for Turkish (`tr`).
 class AppLocalizationsTr extends AppLocalizations {
-  AppLocalizationsTr([String locale = 'tr']) : super(locale);
+  AppLocalizationsTr([super.locale = 'tr']);
 
   @override
-  String get appTitle => 'Idea - Note Taking App';
+  String get appTitle => 'Idea - Not Alma Uygulaması';
 
   @override
   String get addNote => 'Not Ekle';
@@ -124,4 +124,13 @@ class AppLocalizationsTr extends AppLocalizations {
   /// To Do
   @override
   String get categoryToDo => 'Yapılacaklar';
+
+  @override
+  get noteArchived => 'Not arşivlendi';
+
+  @override
+  get noteUnarchived => 'Not arşivlenmedi';
+
+  @override
+  get lock => 'Kilitle';
 }

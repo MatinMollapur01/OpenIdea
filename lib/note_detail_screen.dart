@@ -33,11 +33,13 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   final TextEditingController _passwordController = TextEditingController();
   late String _wordCount;
   late String _characterCount;
+  late bool _isLocked;
 
   @override
   void initState() {
     super.initState();
     _note = widget.note;
+    _isLocked = _note.isLocked;
     _quillController = quill.QuillController(
       document: quill.Document.fromJson(jsonDecode(_note.content)),
       selection: const TextSelection.collapsed(offset: 0),
@@ -132,8 +134,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             },
           ),
           IconButton(
-            icon: Icon(_note.isLocked ? Icons.lock : Icons.lock_open),
-            onPressed: () => _toggleLock(context),
+            icon: Icon(_isLocked ? Icons.lock : Icons.lock_open),
+            onPressed: () {
+              if (_isLocked) {
+                _showUnlockDialog();
+              } else {
+                _showLockDialog();
+              }
+            },
           ),
           IconButton(
             icon: const Icon(Icons.history),
@@ -141,14 +149,50 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => NoteHistoryScreen(currentNote: _note),
+                  builder: (context) => NoteHistoryScreen(
+                    currentNote: _note,
+                    onNoteUpdated: (restoredNote) {
+                      setState(() {
+                        _note = restoredNote;
+                        _quillController = quill.QuillController(
+                          document: quill.Document.fromJson(jsonDecode(_note.content)),
+                          selection: const TextSelection.collapsed(offset: 0),
+                        );
+                      });
+                      widget.onEdit(_note);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(_note.isArchived ? Icons.unarchive : Icons.archive),
+            onPressed: () async {
+              await DatabaseHelper.instance.updateNoteArchiveStatus(_note.id!, !_note.isArchived);
+              setState(() {
+                _note = Note(
+                  id: _note.id,
+                  title: _note.title,
+                  content: _note.content,
+                  categoryKey: _note.categoryKey,
+                  isArchived: !_note.isArchived,
+                  isPinned: _note.isPinned,
+                  tags: _note.tags,
+                  isLocked: _note.isLocked,
+                );
+              });
+              widget.onArchiveStatusChanged(_note.isArchived);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_note.isArchived ? localizations.noteArchived : localizations.noteUnarchived),
                 ),
               );
             },
           ),
         ],
       ),
-      body: Column(
+      body: _note.isLocked ? _buildLockedView() : Column(
         children: [
           Expanded(child: _buildNoteContent()),
           _buildStatsFooter(),
@@ -168,7 +212,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           Text(localizations.thisNoteIsLocked, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => _unlockNote(context),
+            onPressed: _showUnlockDialog,
             child: Text(localizations.unlock),
           ),
         ],
@@ -188,15 +232,15 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             Text(
               '${localizations.category}: ${_note.categoryKey}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               '${localizations.tags}: ${_note.tags.join(', ')}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -227,15 +271,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     );
   }
 
-  void _toggleLock(BuildContext context) {
-    if (_note.isLocked) {
-      _unlockNote(context);
-    } else {
-      _lockNote(context);
-    }
-  }
-
-  void _lockNote(BuildContext context) {
+  void _showLockDialog() {
     final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
@@ -247,36 +283,18 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             obscureText: true,
             decoration: InputDecoration(hintText: localizations.enterPassword),
           ),
-          actions: [
+          actions: <Widget>[
             TextButton(
               child: Text(localizations.cancel),
               onPressed: () {
-                _passwordController.clear();
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text(localizations.unlock),
+              child: Text(localizations.lock),
               onPressed: () async {
-                if (_passwordController.text.isNotEmpty) {
-                  await _savePassword(_passwordController.text);
-                  await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, true);
-                  setState(() {
-                    _note = Note(
-                      id: _note.id,
-                      title: _note.title,
-                      content: _note.content,
-                      categoryKey: _note.categoryKey,
-                      isArchived: _note.isArchived,
-                      isPinned: _note.isPinned,
-                      tags: _note.tags,
-                      isLocked: true,
-                    );
-                  });
-                  widget.onEdit(_note);
-                  _passwordController.clear();
-                  Navigator.of(context).pop();
-                }
+                await _lockNote();
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -285,7 +303,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     );
   }
 
-  void _unlockNote(BuildContext context) {
+  void _showUnlockDialog() {
     final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
@@ -297,11 +315,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             obscureText: true,
             decoration: InputDecoration(hintText: localizations.enterPassword),
           ),
-          actions: [
+          actions: <Widget>[
             TextButton(
               child: Text(localizations.cancel),
               onPressed: () {
-                _passwordController.clear();
                 Navigator.of(context).pop();
               },
             ),
@@ -309,21 +326,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               child: Text(localizations.unlock),
               onPressed: () async {
                 if (await _verifyPassword(_passwordController.text)) {
-                  await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, false);
-                  setState(() {
-                    _note = Note(
-                      id: _note.id,
-                      title: _note.title,
-                      content: _note.content,
-                      categoryKey: _note.categoryKey,
-                      isArchived: _note.isArchived,
-                      isPinned: _note.isPinned,
-                      tags: _note.tags,
-                      isLocked: false,
-                    );
-                  });
-                  widget.onEdit(_note);
-                  _passwordController.clear();
+                  await _unlockNote();
                   Navigator.of(context).pop();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -338,10 +341,45 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     );
   }
 
-  Future<void> _savePassword(String password) async {
+  Future<void> _lockNote() async {
     final prefs = await SharedPreferences.getInstance();
-    final hashedPassword = _hashPassword(password);
+    final hashedPassword = _hashPassword(_passwordController.text);
     await prefs.setString('note_${_note.id}_password', hashedPassword);
+    setState(() {
+      _isLocked = true;
+      _note = Note(
+        id: _note.id,
+        title: _note.title,
+        content: _note.content,
+        categoryKey: _note.categoryKey,
+        isArchived: _note.isArchived,
+        isPinned: _note.isPinned,
+        tags: _note.tags,
+        isLocked: true,
+      );
+    });
+    await DatabaseHelper.instance.updateNote(_note);
+    widget.onEdit(_note); // Add this line to update the parent
+    _passwordController.clear();
+  }
+
+  Future<void> _unlockNote() async {
+    setState(() {
+      _isLocked = false;
+      _note = Note(
+        id: _note.id,
+        title: _note.title,
+        content: _note.content,
+        categoryKey: _note.categoryKey,
+        isArchived: _note.isArchived,
+        isPinned: _note.isPinned,
+        tags: _note.tags,
+        isLocked: false,
+      );
+    });
+    await DatabaseHelper.instance.updateNote(_note);
+    widget.onEdit(_note); // Add this line to update the parent
+    _passwordController.clear();
   }
 
   Future<bool> _verifyPassword(String password) async {
