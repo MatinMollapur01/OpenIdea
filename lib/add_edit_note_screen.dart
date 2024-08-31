@@ -4,7 +4,7 @@ import 'main.dart';
 import 'database_helper.dart';
 import 'dart:convert';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:idea/gen_l10n/app_localizations.dart';
+import 'package:openidea/gen_l10n/app_localizations.dart';
 
 class AddEditNoteScreen extends StatefulWidget {
   final Note? noteToEdit;

@@ -5,7 +5,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'Idea - تطبيق تدوين الملاحظات';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => 'إضافة ملاحظة';

@@ -5,7 +5,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([super.locale = 'zh']);
 
   @override
-  String get appTitle => 'Idea - 笔记应用程序';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => '添加笔记';

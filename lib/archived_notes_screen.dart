@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:idea/gen_l10n/app_localizations.dart';
+import 'package:openidea/gen_l10n/app_localizations.dart';
 import 'main.dart';
 import 'note_detail_screen.dart';
 import 'database_helper.dart';

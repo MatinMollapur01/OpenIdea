@@ -5,7 +5,7 @@ class AppLocalizationsAz extends AppLocalizations {
   AppLocalizationsAz([super.locale = 'az']);
 
   @override
-  String get appTitle => 'Idea - Qeyd Götürmə Tətbiqi';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => 'Qeyd əlavə et';

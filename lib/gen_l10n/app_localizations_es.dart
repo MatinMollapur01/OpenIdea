@@ -5,7 +5,7 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([super.locale = 'es']);
 
   @override
-  String get appTitle => 'Idea - Aplicación para tomar notas';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => 'Agregar nota';

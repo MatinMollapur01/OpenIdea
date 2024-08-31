@@ -7,7 +7,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Idea - Note Taking App';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => 'Add Note';

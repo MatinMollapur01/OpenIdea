@@ -3,7 +3,7 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'dart:convert';
 import 'database_helper.dart';
 import 'main.dart';
-import 'package:idea/gen_l10n/app_localizations.dart';
+import 'package:openidea/gen_l10n/app_localizations.dart';
 
 class NoteHistoryScreen extends StatefulWidget {
   final Note currentNote;

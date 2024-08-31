@@ -5,7 +5,7 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([super.locale = 'tr']);
 
   @override
-  String get appTitle => 'Idea - Not Alma Uygulaması';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => 'Not Ekle';

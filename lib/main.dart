@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'package:idea/database_helper.dart';
+import 'package:openidea/database_helper.dart';
 import 'add_edit_note_screen.dart' as add_edit;
 import 'note_detail_screen.dart' as detail;
 import 'settings_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'archived_notes_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:idea/gen_l10n/app_localizations.dart';
+import 'package:openidea/gen_l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,7 +65,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Idea',
+      title: 'OpenIdea',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepPurple,
@@ -73,6 +73,7 @@ class _MyAppState extends State<MyApp> {
           surface: _isDarkMode ? const Color(0xFF1C1919) : const Color(0xFFD9D9D9),
           onSurface: _isDarkMode ? const Color(0xFFD9D9D9) : const Color(0xFF1C1919),
         ),
+        fontFamily: 'Kavivanar', // Add this line to set the font family
         useMaterial3: true,
       ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,

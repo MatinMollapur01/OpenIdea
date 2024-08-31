@@ -5,7 +5,7 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([super.locale = 'fa']);
 
   @override
-  String get appTitle => 'Idea - برنامه یادداشت‌برداری';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => 'افزودن یادداشت';

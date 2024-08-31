@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:idea/gen_l10n/app_localizations.dart';
+import 'package:openidea/gen_l10n/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool isDarkMode;

@@ -5,7 +5,7 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([super.locale = 'ru']);
 
   @override
-  String get appTitle => 'Idea - Приложение для заметок';
+  String get appTitle => 'OpenIdea';
 
   @override
   String get addNote => 'Добавить заметку';

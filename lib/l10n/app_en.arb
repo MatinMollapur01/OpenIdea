@@ -3,7 +3,7 @@
   "@appTitle": {
     "description": "The title of the application"
   },
-  "appTitle": "Idea - Note Taking App",
+  "appTitle": "OpenIdea",
   "@addNote": {
     "description": "Label for adding a new note"
   },
