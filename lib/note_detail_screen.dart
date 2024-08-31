@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
 import 'note_history_screen.dart';
+import 'package:idea/gen_l10n/app_localizations.dart';
 
 class NoteDetailScreen extends StatefulWidget {
   final Note note;
@@ -53,51 +54,29 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(_note.title),
         actions: [
           IconButton(
-            icon: Icon(_note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+            icon: const Icon(Icons.edit),
             onPressed: () async {
-              await DatabaseHelper.instance.updateNotePinStatus(_note.id!, !_note.isPinned);
-              setState(() {
-                _note = Note(
-                  id: _note.id,
-                  title: _note.title,
-                  content: _note.content,
-                  category: _note.category,
-                  isArchived: _note.isArchived,
-                  isPinned: !_note.isPinned,
-                  tags: _note.tags,
-                  isLocked: _note.isLocked,
-                );
-              });
-              widget.onEdit(_note);
-            },
-          ),
-          if (!_note.isArchived)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () async {
-                final editedNote = await Navigator.push<Note>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddEditNoteScreen(noteToEdit: _note),
-                  ),
-                );
-                if (editedNote != null) {
-                  widget.onEdit(editedNote);
-                }
-              },
-            ),
-          IconButton(
-            icon: Icon(_note.isArchived ? Icons.unarchive : Icons.archive),
-            onPressed: () async {
-              await DatabaseHelper.instance.updateNoteArchiveStatus(_note.id!, !_note.isArchived);
-              widget.onArchiveStatusChanged(!_note.isArchived);
-              if (mounted) {
-                Navigator.pop(context);
+              final editedNote = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddEditNoteScreen(noteToEdit: _note),
+                ),
+              );
+              if (editedNote != null) {
+                setState(() {
+                  _note = editedNote;
+                  _quillController = quill.QuillController(
+                    document: quill.Document.fromJson(jsonDecode(_note.content)),
+                    selection: const TextSelection.collapsed(offset: 0),
+                  );
+                });
+                widget.onEdit(_note);
               }
             },
           ),
@@ -109,15 +88,15 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: const Text("Delete Note"),
-                      content: const Text("Are you sure you want to delete this note?"),
+                      title: Text(localizations.deleteNote),
+                      content: Text(localizations.areYouSureDeleteNote),
                       actions: [
                         TextButton(
-                          child: const Text("Cancel"),
+                          child: Text(localizations.cancel),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         TextButton(
-                          child: const Text("Delete"),
+                          child: Text(localizations.delete),
                           onPressed: () async {
                             await DatabaseHelper.instance.deleteNote(_note.id!);
                             widget.onDelete();
@@ -134,39 +113,44 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               },
             ),
           IconButton(
+            icon: Icon(_note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+            onPressed: () async {
+              await DatabaseHelper.instance.updateNotePinStatus(_note.id!, !_note.isPinned);
+              setState(() {
+                _note = Note(
+                  id: _note.id,
+                  title: _note.title,
+                  content: _note.content,
+                  categoryKey: _note.categoryKey,
+                  isArchived: _note.isArchived,
+                  isPinned: !_note.isPinned,
+                  tags: _note.tags,
+                  isLocked: _note.isLocked,
+                );
+              });
+              widget.onEdit(_note);
+            },
+          ),
+          IconButton(
             icon: Icon(_note.isLocked ? Icons.lock : Icons.lock_open),
             onPressed: () => _toggleLock(context),
           ),
           IconButton(
             icon: const Icon(Icons.history),
-            onPressed: () async {
-              final restoredNote = await Navigator.push<Note>(
+            onPressed: () {
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => NoteHistoryScreen(currentNote: _note),
                 ),
               );
-              if (restoredNote != null) {
-                setState(() {
-                  _note = restoredNote;
-                  _quillController = quill.QuillController(
-                    document: quill.Document.fromJson(jsonDecode(_note.content)),
-                    selection: const TextSelection.collapsed(offset: 0),
-                    readOnly: true,
-                  );
-                  _updateStats();
-                });
-                widget.onEdit(_note);
-              }
             },
           ),
         ],
       ),
       body: Column(
         children: [
-          Expanded(
-            child: _note.isLocked ? _buildLockedView() : _buildNoteContent(),
-          ),
+          Expanded(child: _buildNoteContent()),
           _buildStatsFooter(),
         ],
       ),
@@ -174,17 +158,18 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   Widget _buildLockedView() {
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.lock, size: 64, color: Theme.of(context).colorScheme.secondary),
           const SizedBox(height: 16),
-          Text('This note is locked', style: Theme.of(context).textTheme.headlineSmall),
+          Text(localizations.thisNoteIsLocked, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () => _unlockNote(context),
-            child: const Text('Unlock'),
+            child: Text(localizations.unlock),
           ),
         ],
       ),
@@ -192,6 +177,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   Widget _buildNoteContent() {
+    final localizations = AppLocalizations.of(context)!;
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: Padding(
@@ -200,14 +186,14 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Category: ${_note.category}',
+              '${localizations.category}: ${_note.categoryKey}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
             const SizedBox(height: 16),
             Text(
-              'Tags: ${_note.tags.join(', ')}',
+              '${localizations.tags}: ${_note.tags.join(', ')}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -227,11 +213,12 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   Widget _buildStatsFooter() {
+    final localizations = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(8.0),
       color: Theme.of(context).colorScheme.surface,
       child: Text(
-        'Words: $_wordCount | Characters: $_characterCount',
+        '${localizations.words}: $_wordCount | ${localizations.characters}: $_characterCount',
         style: TextStyle(
           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           fontSize: 12,
@@ -249,26 +236,27 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   void _lockNote(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Set Password'),
+          title: Text(localizations.setPassword),
           content: TextField(
             controller: _passwordController,
             obscureText: true,
-            decoration: const InputDecoration(hintText: 'Enter password'),
+            decoration: InputDecoration(hintText: localizations.enterPassword),
           ),
           actions: [
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(localizations.cancel),
               onPressed: () {
                 _passwordController.clear();
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Lock'),
+              child: Text(localizations.unlock),
               onPressed: () async {
                 if (_passwordController.text.isNotEmpty) {
                   await _savePassword(_passwordController.text);
@@ -278,7 +266,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       id: _note.id,
                       title: _note.title,
                       content: _note.content,
-                      category: _note.category,
+                      categoryKey: _note.categoryKey,
                       isArchived: _note.isArchived,
                       isPinned: _note.isPinned,
                       tags: _note.tags,
@@ -298,26 +286,27 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   void _unlockNote(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Enter Password'),
+          title: Text(localizations.enterPassword),
           content: TextField(
             controller: _passwordController,
             obscureText: true,
-            decoration: const InputDecoration(hintText: 'Enter password'),
+            decoration: InputDecoration(hintText: localizations.enterPassword),
           ),
           actions: [
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(localizations.cancel),
               onPressed: () {
                 _passwordController.clear();
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Unlock'),
+              child: Text(localizations.unlock),
               onPressed: () async {
                 if (await _verifyPassword(_passwordController.text)) {
                   await DatabaseHelper.instance.updateNoteLockStatus(_note.id!, false);
@@ -326,7 +315,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       id: _note.id,
                       title: _note.title,
                       content: _note.content,
-                      category: _note.category,
+                      categoryKey: _note.categoryKey,
                       isArchived: _note.isArchived,
                       isPinned: _note.isPinned,
                       tags: _note.tags,
@@ -338,7 +327,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                   Navigator.of(context).pop();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Incorrect password')),
+                    SnackBar(content: Text(localizations.incorrectPassword)),
                   );
                 }
               },

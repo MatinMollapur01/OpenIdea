@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:idea/gen_l10n/app_localizations.dart';
 import 'main.dart';
 import 'note_detail_screen.dart';
 import 'database_helper.dart';
@@ -30,9 +31,10 @@ class _ArchivedNotesScreenState extends State<ArchivedNotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Archived Notes'),
+        title: Text(localizations.archivedNotes),
       ),
       body: ListView.builder(
         itemCount: _archivedNotes.length,
@@ -40,7 +42,7 @@ class _ArchivedNotesScreenState extends State<ArchivedNotesScreen> {
           final note = _archivedNotes[index];
           return ListTile(
             title: Text(note.title),
-            subtitle: Text('Category: ${note.category}'),
+            subtitle: Text('Category: ${note.categoryKey}'),
             onTap: () {
               Navigator.push(
                 context,

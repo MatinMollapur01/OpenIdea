@@ -7,6 +7,7 @@ import 'settings_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'archived_notes_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:idea/gen_l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,18 +23,20 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _isDarkMode = true;  // Change this to true
+  bool _isDarkMode = true;
+  String _currentLanguage = 'en';
 
   @override
   void initState() {
     super.initState();
-    _loadDarkModePreference();
+    _loadPreferences();
   }
 
-  void _loadDarkModePreference() async {
+  void _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? true;  // Change this to true
+      _isDarkMode = prefs.getBool('isDarkMode') ?? true;
+      _currentLanguage = prefs.getString('language') ?? 'en';
     });
   }
 
@@ -43,6 +46,19 @@ class _MyAppState extends State<MyApp> {
     });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDarkMode', value);
+  }
+
+  void changeLanguage(String languageCode) async {
+    setState(() {
+      _currentLanguage = languageCode;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language', languageCode);
+    
+    // Rebuild the entire app
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -58,65 +74,32 @@ class _MyAppState extends State<MyApp> {
         ),
         useMaterial3: true,
       ),
-      home: IdeaHomePage(title: 'Idea - Note Taking App', isDarkMode: _isDarkMode, toggleDarkMode: toggleDarkMode),
-    );
-  }
-}
-
-class Note {
-  int? id;
-  String title;
-  String content;
-  String category;
-  bool isArchived;
-  bool isPinned;
-  List<String> tags;
-  bool isLocked; // Add this line
-
-  Note({
-    this.id,
-    required this.title,
-    required this.content,
-    required this.category,
-    this.isArchived = false,
-    this.isPinned = false,
-    this.tags = const [],
-    this.isLocked = false, // Add this line
-  });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'title': title,
-      'content': content,
-      'category': category,
-      'isArchived': isArchived ? 1 : 0,
-      'isPinned': isPinned ? 1 : 0,
-      'tags': jsonEncode(tags),
-      'isLocked': isLocked ? 1 : 0, // Add this line
-    };
-  }
-
-  factory Note.fromMap(Map<String, dynamic> map) {
-    return Note(
-      id: map['id'] as int?,
-      title: map['title'] as String,
-      content: map['content'] as String,
-      category: map['category'] as String,
-      isArchived: map['isArchived'] == 1,
-      isPinned: map['isPinned'] == 1,
-      tags: List<String>.from(jsonDecode(map['tags'])),
-      isLocked: map['isLocked'] == 1, // Add this line
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: Locale(_currentLanguage),
+      home: IdeaHomePage(
+        isDarkMode: _isDarkMode,
+        toggleDarkMode: toggleDarkMode,
+        changeLanguage: changeLanguage,
+        currentLanguage: _currentLanguage,
+      ),
     );
   }
 }
 
 class IdeaHomePage extends StatefulWidget {
-  const IdeaHomePage({super.key, required this.title, required this.isDarkMode, required this.toggleDarkMode});
+  const IdeaHomePage({
+    super.key,
+    required this.isDarkMode,
+    required this.toggleDarkMode,
+    required this.changeLanguage,
+    required this.currentLanguage,
+  });
 
-  final String title;
   final bool isDarkMode;
   final Function(bool) toggleDarkMode;
+  final Function(String) changeLanguage;
+  final String currentLanguage;
 
   @override
   State<IdeaHomePage> createState() => _IdeaHomePageState();
@@ -194,10 +177,10 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text(localizations.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.archive),
@@ -212,30 +195,23 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
                   ),
                 ),
               );
-              _loadNotes(); // Refresh notes when returning from ArchivedNotesScreen
+              _loadNotes();
             },
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'settings') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SettingsScreen(
-                      isDarkMode: widget.isDarkMode,
-                      toggleDarkMode: widget.toggleDarkMode,
-                    ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsScreen(
+                    isDarkMode: widget.isDarkMode,
+                    toggleDarkMode: widget.toggleDarkMode,
+                    changeLanguage: widget.changeLanguage,
+                    currentLanguage: widget.currentLanguage,
                   ),
-                );
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return {'Settings'}.map((String choice) {
-                return PopupMenuItem<String>(
-                  value: choice.toLowerCase(),
-                  child: Text(choice),
-                );
-              }).toList();
+                ),
+              );
             },
           ),
         ],
@@ -250,9 +226,9 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
                   _searchQuery = value;
                 });
               },
-              decoration: const InputDecoration(
-                labelText: 'Search',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                labelText: localizations.search,
+                prefixIcon: const Icon(Icons.search),
               ),
             ),
           ),
@@ -260,17 +236,17 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
             child: ListView(
               children: [
                 if (_filteredPinnedNotes.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Pinned Notes', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(localizations.pinnedNotes, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   ..._filteredPinnedNotes.map((note) => _buildNoteListTile(note)),
                   const Divider(),
                 ],
                 if (_filteredUnpinnedNotes.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Other Notes', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(localizations.otherNotes, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   ..._filteredUnpinnedNotes.map((note) => _buildNoteListTile(note)),
                 ],
@@ -281,18 +257,21 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addOrEditNote(),
-        tooltip: 'Add Note',
+        tooltip: localizations.addNote,
         child: const Icon(Icons.add),
       ),
     );
   }
 
   Widget _buildNoteListTile(Note note) {
+    final localizations = AppLocalizations.of(context)!;
+    String localizedCategory = _getLocalizedCategory(note.categoryKey, localizations);
+    
     return ListTile(
       title: Text(note.title),
-      subtitle: Text('Category: ${note.category}'),
+      subtitle: Text('${localizations.category}: $localizedCategory'),
       leading: note.isPinned ? const Icon(Icons.push_pin) : null,
-      trailing: note.isLocked ? const Icon(Icons.lock) : null, // Add this line
+      trailing: note.isLocked ? const Icon(Icons.lock) : null,
       onTap: () {
         Navigator.push(
           context,
@@ -306,6 +285,7 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
                     _notes[noteIndex] = editedNote;
                   }
                 });
+                _loadNotes(); // Reload notes to reflect changes
               },
               onDelete: () {
                 setState(() {
@@ -325,6 +305,69 @@ class _IdeaHomePageState extends State<IdeaHomePage> {
           ),
         );
       },
+    );
+  }
+
+  String _getLocalizedCategory(String categoryKey, AppLocalizations localizations) {
+    switch (categoryKey) {
+      case 'work':
+        return localizations.categoryWork;
+      case 'personal':
+        return localizations.categoryPersonal;
+      case 'ideas':
+        return localizations.categoryIdeas;
+      case 'todo':
+        return localizations.categoryToDo;
+      default:
+        return categoryKey;
+    }
+  }
+}
+
+class Note {
+  int? id;
+  String title;
+  String content;
+  String categoryKey; // This should be 'work', 'personal', 'ideas', or 'todo'
+  bool isArchived;
+  bool isPinned;
+  List<String> tags;
+  bool isLocked;
+
+  Note({
+    this.id,
+    required this.title,
+    required this.content,
+    required this.categoryKey,
+    this.isArchived = false,
+    this.isPinned = false,
+    this.tags = const [],
+    this.isLocked = false,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'category': categoryKey,
+      'isArchived': isArchived ? 1 : 0,
+      'isPinned': isPinned ? 1 : 0,
+      'tags': jsonEncode(tags),
+      'isLocked': isLocked ? 1 : 0,
+    };
+  }
+
+  factory Note.fromMap(Map<String, dynamic> map) {
+    return Note(
+      id: map['id'] as int?,
+      title: map['title'] as String,
+      content: map['content'] as String,
+      categoryKey: map['category'] as String,
+      isArchived: map['isArchived'] == 1,
+      isPinned: map['isPinned'] == 1,
+      tags: List<String>.from(jsonDecode(map['tags'])),
+      isLocked: map['isLocked'] == 1,
     );
   }
 }

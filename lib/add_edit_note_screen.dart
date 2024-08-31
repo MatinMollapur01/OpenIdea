@@ -4,6 +4,7 @@ import 'main.dart';
 import 'database_helper.dart';
 import 'dart:convert';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:idea/gen_l10n/app_localizations.dart';
 
 class AddEditNoteScreen extends StatefulWidget {
   final Note? noteToEdit;
@@ -18,7 +19,6 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
   late TextEditingController _titleController;
   late quill.QuillController _contentController;
   late String _selectedCategory;
-  final List<String> _categories = ['Work', 'Personal', 'Ideas', 'To-Do'];
   late TextEditingController _tagsController;
 
   @override
@@ -31,118 +31,145 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
           : quill.Document(),
       selection: const TextSelection.collapsed(offset: 0),
     );
-    _selectedCategory = widget.noteToEdit?.category ?? _categories[0];
     _tagsController = TextEditingController(text: widget.noteToEdit?.tags.join(', ') ?? '');
+    _selectedCategory = widget.noteToEdit?.categoryKey ?? 'work';
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final categories = [
+      {'key': 'work', 'value': localizations.categoryWork},
+      {'key': 'personal', 'value': localizations.categoryPersonal},
+      {'key': 'ideas', 'value': localizations.categoryIdeas},
+      {'key': 'todo', 'value': localizations.categoryToDo},
+    ];
+    final isLocked = widget.noteToEdit?.isLocked ?? false;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.noteToEdit == null ? 'Add Note' : 'Edit Note'),
+        title: Text(widget.noteToEdit == null ? localizations.addNote : localizations.editNote),
+        actions: [
+          if (!isLocked)
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveNote,
+            ),
+        ],
       ),
-      body: Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: 'Title',
-                  border: const OutlineInputBorder(),
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                  filled: true,
-                ),
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              ),
-              const SizedBox(height: 16),
-              CustomToolbar(_contentController),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: quill.QuillEditor(
-                    controller: _contentController,
-                    scrollController: ScrollController(),
-                    focusNode: FocusNode(),
-                    configurations: const quill.QuillEditorConfigurations(
-                      scrollable: true,
-                      autoFocus: false,
-                      padding: EdgeInsets.zero,
-                      expands: false,
+      body: isLocked
+          ? Center(
+              child: Text('This note is locked and cannot be edited.'),
+            )
+          : Container(
+              color: Theme.of(context).colorScheme.surface,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        labelText: localizations.title,
+                        border: const OutlineInputBorder(),
+                        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                        filled: true,
+                      ),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    CustomToolbar(_contentController),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: quill.QuillEditor(
+                          controller: _contentController,
+                          scrollController: ScrollController(),
+                          focusNode: FocusNode(),
+                          configurations: const quill.QuillEditorConfigurations(
+                            scrollable: true,
+                            autoFocus: false,
+                            padding: EdgeInsets.zero,
+                            expands: false,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategory,
+                      items: categories.map((category) {
+                        return DropdownMenuItem(
+                          value: category['key'],
+                          child: Text(category['value']!),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedCategory = newValue;
+                          });
+                        }
+                      },
+                      decoration: InputDecoration(
+                        labelText: localizations.category,
+                        border: const OutlineInputBorder(),
+                        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                        filled: true,
+                      ),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _tagsController,
+                      decoration: InputDecoration(
+                        labelText: localizations.tagsCommaSeparated,
+                        border: const OutlineInputBorder(),
+                        fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                        filled: true,
+                      ),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _saveNote,
+                      child: Text(widget.noteToEdit == null ? localizations.add : localizations.save),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                items: _categories.map((String category) {
-                  return DropdownMenuItem<String>(
-                    value: category,
-                    child: Text(category),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedCategory = newValue;
-                    });
-                  }
-                },
-                decoration: InputDecoration(
-                  labelText: 'Category',
-                  border: const OutlineInputBorder(),
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                  filled: true,
-                ),
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _tagsController,
-                decoration: InputDecoration(
-                  labelText: 'Tags (comma separated)',
-                  border: const OutlineInputBorder(),
-                  fillColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                  filled: true,
-                ),
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  final note = Note(
-                    id: widget.noteToEdit?.id,
-                    title: _titleController.text,
-                    content: jsonEncode(_contentController.document.toDelta().toJson()),
-                    category: _selectedCategory,
-                    isArchived: widget.noteToEdit?.isArchived ?? false,
-                    isPinned: widget.noteToEdit?.isPinned ?? false,
-                    tags: _tagsController.text.split(',').map((tag) => tag.trim()).toList(),
-                    isLocked: widget.noteToEdit?.isLocked ?? false,
-                  );
-                  if (widget.noteToEdit == null) {
-                    int id = await DatabaseHelper.instance.insertNote(note);
-                    note.id = id;
-                  } else {
-                    await DatabaseHelper.instance.updateNote(note);
-                  }
-                  if (!mounted) return;
-                  Navigator.pop(context, note);
-                },
-                child: Text(widget.noteToEdit == null ? 'Add' : 'Save'),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
+  }
+
+  void _saveNote() async {
+    final note = Note(
+      id: widget.noteToEdit?.id,
+      title: _titleController.text,
+      content: jsonEncode(_contentController.document.toDelta().toJson()),
+      categoryKey: _selectedCategory,
+      isArchived: widget.noteToEdit?.isArchived ?? false,
+      isPinned: widget.noteToEdit?.isPinned ?? false,
+      tags: _tagsController.text.split(',').map((tag) => tag.trim()).toList(),
+      isLocked: widget.noteToEdit?.isLocked ?? false,
+    );
+    if (widget.noteToEdit == null) {
+      int id = await DatabaseHelper.instance.insertNote(note);
+      note.id = id;
+    } else {
+      await DatabaseHelper.instance.updateNote(note);
+    }
+    if (!mounted) return;
+    Navigator.pop(context, note);
   }
 
   @override
@@ -154,7 +181,6 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
   }
 }
 
-// CustomToolbar widget
 class CustomToolbar extends StatelessWidget {
   final quill.QuillController controller;
 
@@ -162,6 +188,7 @@ class CustomToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -246,11 +273,12 @@ class CustomToolbar extends StatelessWidget {
   }
 
   void _showColorPicker(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Pick a color'),
+          title: Text(localizations.pickColor),
           content: SingleChildScrollView(
             child: ColorPicker(
               pickerColor: Colors.black,
@@ -263,13 +291,13 @@ class CustomToolbar extends StatelessWidget {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Done'),
+              child: Text(localizations.done),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Remove Color'),
+              child: Text(localizations.removeColor),
               onPressed: () {
                 controller.formatSelection(const quill.ColorAttribute(null));
                 Navigator.of(context).pop();
@@ -282,11 +310,12 @@ class CustomToolbar extends StatelessWidget {
   }
 
   void _showBackgroundColorPicker(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Pick a background color'),
+          title: Text(localizations.pickBackgroundColor),
           content: SingleChildScrollView(
             child: ColorPicker(
               pickerColor: Colors.white,
@@ -299,13 +328,13 @@ class CustomToolbar extends StatelessWidget {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Done'),
+              child: Text(localizations.done),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Remove Background Color'),
+              child: Text(localizations.removeBackgroundColor),
               onPressed: () {
                 controller.formatSelection(const quill.BackgroundAttribute(null));
                 Navigator.of(context).pop();

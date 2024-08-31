@@ -3,6 +3,7 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'dart:convert';
 import 'database_helper.dart';
 import 'main.dart';
+import 'package:idea/gen_l10n/app_localizations.dart';
 
 class NoteHistoryScreen extends StatefulWidget {
   final Note currentNote;
@@ -31,9 +32,10 @@ class _NoteHistoryScreenState extends State<NoteHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Note History'),
+        title: Text(localizations.noteHistory),
       ),
       body: ListView.builder(
         itemCount: _history.length,
@@ -68,6 +70,7 @@ class NoteHistoryDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     final quillController = quill.QuillController(
       document: quill.Document.fromJson(jsonDecode(historyItem['content'])),
       selection: const TextSelection.collapsed(offset: 0),
@@ -83,7 +86,7 @@ class NoteHistoryDetailScreen extends StatelessWidget {
                 id: currentNote.id,
                 title: historyItem['title'],
                 content: historyItem['content'],
-                category: currentNote.category,
+                categoryKey: currentNote.categoryKey,
                 isArchived: currentNote.isArchived,
                 isPinned: currentNote.isPinned,
                 tags: currentNote.tags,
@@ -95,7 +98,7 @@ class NoteHistoryDetailScreen extends StatelessWidget {
               Navigator.of(context).pop();
               Navigator.of(context).pop(updatedNote);
             },
-            child: const Text('Restore'),
+            child: Text(localizations.restore),
           ),
         ],
       ),
