@@ -7,13 +7,13 @@ import 'database_helper.dart';
 class ArchivedNotesScreen extends StatefulWidget {
   final Function onNoteUnarchived;
 
-  const ArchivedNotesScreen({Key? key, required this.onNoteUnarchived}) : super(key: key);
+  const ArchivedNotesScreen({super.key, required this.onNoteUnarchived});
 
   @override
-  _ArchivedNotesScreenState createState() => _ArchivedNotesScreenState();
+  ArchivedNotesScreenState createState() => ArchivedNotesScreenState();
 }
 
-class _ArchivedNotesScreenState extends State<ArchivedNotesScreen> {
+class ArchivedNotesScreenState extends State<ArchivedNotesScreen> {
   List<Note> _archivedNotes = [];
 
   @override

@@ -63,7 +63,7 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
         ],
       ),
       body: isLocked
-          ? Center(
+          ? const Center(
               child: Text('This note is locked and cannot be edited.'),
             )
           : Container(
